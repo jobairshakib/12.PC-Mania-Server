@@ -15,7 +15,20 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'UnAuthorized Access' });
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden Access' });
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
 
 async function run() {
     try {
@@ -23,6 +36,21 @@ async function run() {
         const partCollection = client.db("PC_Mania").collection("parts");
         const purchaseCollection = client.db("PC_Mania").collection("purchases");
         const userCollection = client.db("PC_Mania").collection("users");
+
+        app.get('/user', verifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        });
+
+        app.put('/user/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: {role:'admin'},
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        });
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -58,13 +86,18 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/purchase', async (req, res) => {
+        app.get('/purchase', verifyJWT, async (req, res) => {
             const customer = req.query.customer;
-            const authorization = req.headers.authorization;
-            console.log('Auth', authorization);
-            const query = { customer: customer };
-            const result = await purchaseCollection.find(query).toArray();
-            res.send(result);
+            
+            const decodedEmail = req.decoded.email;
+            if (customer === decodedEmail) {
+                const query = { customer: customer };
+                const result = await purchaseCollection.find(query).toArray();
+                return res.send(result);
+            }
+            else {
+                return res.status(403).send({ message: 'Forbidden Access' });
+            }
         })
 
         app.post("/purchase", async (req, res) => {

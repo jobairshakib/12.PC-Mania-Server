@@ -15,6 +15,8 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+
+
 async function run() {
     try {
         await client.connect();
@@ -58,6 +60,8 @@ async function run() {
 
         app.get('/purchase', async (req, res) => {
             const customer = req.query.customer;
+            const authorization = req.headers.authorization;
+            console.log('Auth', authorization);
             const query = { customer: customer };
             const result = await purchaseCollection.find(query).toArray();
             res.send(result);

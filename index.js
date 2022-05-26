@@ -86,6 +86,12 @@ async function run() {
             res.send(parts);
         });
 
+        app.post('/part', async (req, res) => {
+            const part = req.body;
+            const result = await partCollection.insertOne(part);
+            res.send(result);
+        })
+
         app.get("/part/:id", async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };

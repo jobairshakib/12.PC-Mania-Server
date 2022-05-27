@@ -36,6 +36,7 @@ async function run() {
         const partCollection = client.db("PC_Mania").collection("parts");
         const purchaseCollection = client.db("PC_Mania").collection("purchases");
         const userCollection = client.db("PC_Mania").collection("users");
+        const reviewCollection = client.db("PC_Mania").collection("reviews");
 
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
@@ -149,7 +150,19 @@ async function run() {
             const result = await partCollection.updateOne(filter, updateDoc, options);
             res.send(result);
         });
-        
+        // Review
+        app.get('/review', async (req, res) => {
+            const query = {};
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
+
+        app.post('/addReview', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        })
 
     } finally {
     }

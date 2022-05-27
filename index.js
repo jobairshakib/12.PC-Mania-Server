@@ -98,6 +98,12 @@ async function run() {
             const part = await partCollection.findOne(query);
             res.send(part);
         });
+        app.delete('/part/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await partCollection.deleteOne(query);
+            res.send(result);
+        })
 
         // Purchases
         app.get('/purchases', async (req, res) => {
@@ -108,7 +114,6 @@ async function run() {
 
         app.get('/purchase', verifyJWT, async (req, res) => {
             const customer = req.query.customer;
-            
             const decodedEmail = req.decoded.email;
             if (customer === decodedEmail) {
                 const query = { customer: customer };

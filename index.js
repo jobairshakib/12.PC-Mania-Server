@@ -86,7 +86,7 @@ async function run() {
             res.send(parts);
         });
 
-        app.post('/part', async (req, res) => {
+        app.post('/addPart', async (req, res) => {
             const part = req.body;
             const result = await partCollection.insertOne(part);
             res.send(result);

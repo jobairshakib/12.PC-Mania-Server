@@ -39,6 +39,7 @@ async function run() {
         const purchaseCollection = client.db("PC_Mania").collection("purchases");
         const userCollection = client.db("PC_Mania").collection("users");
         const reviewCollection = client.db("PC_Mania").collection("reviews");
+        const paymentCollection = client.db("PC_Mania").collection("payments");
 
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
@@ -140,6 +141,23 @@ async function run() {
             const result = await purchaseCollection.insertOne(purchase);
             res.send(result);
         });
+
+        app.patch('/purchase/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId,
+                },
+            };
+
+            const result = await paymentCollection.insertOne(payment);
+            const updatePurchase = await purchaseCollection.updateOne(filter, updateDoc);
+            res.send(updateDoc);
+
+        })
         
         app.delete('/purchase/:id', async (req, res) => {
             const id = req.params.id;
@@ -177,11 +195,15 @@ async function run() {
         app.post('/create-payment-intent', verifyJWT, async(req, res)=> {
             const purchase = req.body;
             const price = purchase.totalPrice;
-            const amount = price * 100;
+            const amount = price; 
+            // upore (price * 100) dile kichu product e total price beshi hole error dicche..
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
                 currency: "bdt",
-                payment_method_types: ['card']
+                // payment_method_types: ['card']
+                automatic_payment_methods: {
+                    enabled: true,
+                },
             });
             res.send({
                 clientSecret: paymentIntent.client_secret

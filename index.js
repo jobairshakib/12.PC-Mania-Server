@@ -83,6 +83,27 @@ async function run() {
             res.send({ result , token});
         })
 
+        // upadte user
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+
+        app.get('/user', async (req, res) => {
+            const email = req.params.email;
+            const query = {email: email}
+            const result = await userCollection.findOne(query);
+            
+            res.send(result);
+        })
+
         app.get("/part", async (req, res) => {
             const query = {};
             const cursor = partCollection.find(query);
